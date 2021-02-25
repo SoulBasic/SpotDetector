@@ -22,16 +22,53 @@ void MainWindow::on_start_button_clicked()
 void MainWindow::on_thresh_val_slider_sliderMoved(int position)
 {
 	double val = 205 + position;
-#ifdef _DEBUG
-	qDebug("pos=%d val=%d", position, val);
-#endif // DEBUG
 
 	this->ui->widget->getDetector()->setThreshVal(val);
 }
 
 void MainWindow::on_detect_size_slider_sliderMoved(int position)
 {
-	this->ui->widget->getDetector()->setMinArea(position * 2);
+	this->ui->widget->getDetector()->setMinArea(position >> 1);
+}
+
+void MainWindow::on_target_ver_slider_sliderMoved(int position)
+{
+	float val = 0.45 + position * 0.001;
+	this->ui->widget->getDetector()->setVerOffset(val);
+}
+
+void MainWindow::on_target_hor_slider_sliderMoved(int position)
+{
+	float val = 0.45 + position * 0.001;
+	this->ui->widget->getDetector()->setHorOffset(val);
+}
+
+void MainWindow::on_target_angle_slider_sliderMoved(int position)
+{
+	this->ui->widget->getDetector()->setOffsetAngle(position/5 - 10);
+}
+
+void MainWindow::on_target_cell_slider_sliderMoved(int position)
+{
+	float val = 0.05 + position * 0.0004;
+	this->ui->widget->getDetector()->setCellExpandPara(val);
+}
+
+void MainWindow::on_save_button_clicked()
+{
+	FILE* target = fopen("target_config.ini", "wt+");
+	if (target != nullptr)
+	{
+		fprintf(target, "target_ver_offset=%f\ntarget_hor_offset=%f\ntarget_offset_angle=%d\ncell_expand_para=%f", 
+			this->ui->widget->getDetector()->verOffset(), this->ui->widget->getDetector()->horOffset(), 
+			this->ui->widget->getDetector()->offsetAngle(), this->ui->widget->getDetector()->cellExpandPara());
+		fclose(target);
+		QMessageBox::information(this, u8"信息", u8"保存成功", QMessageBox::Ok, QMessageBox::Ok);
+	}
+	else
+	{
+		QMessageBox::information(this, u8"信息", u8"保存失败", QMessageBox::Ok, QMessageBox::Ok);
+	}
 }
 
 void MainWindow::on_pause_button_clicked()

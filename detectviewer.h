@@ -26,7 +26,7 @@ public:
 protected:
     void initializeGL() override;
     void paintGL() override;
-	//void mouseMoveEvent(QMouseEvent *event);
+	void mouseMoveEvent(QMouseEvent *event);
 signals:
 
 private:

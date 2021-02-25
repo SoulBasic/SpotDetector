@@ -2,7 +2,7 @@
 
 DetectViewer::DetectViewer(QWidget *parent) :
 	QOpenGLWidget{ parent },
-	dtcr(Detector(235, 100)),
+	dtcr(Detector(235, 15)),
 	_isFill(true)
 {
 
@@ -16,23 +16,23 @@ DetectViewer::~DetectViewer()
 
 void DetectViewer::initializeGL()
 {
-//	if (!dtcr.initPLC())
-//	{
-//#ifdef _DEBUG
-//		qDebug("%s", "无法初始化通信模块");
-//#endif // _DEBUG
-//
-//		QMessageBox::information(nullptr, "error", u8"无法初始化通信模块，请检查与触摸屏的网线连接", QMessageBox::Ok, QMessageBox::Ok);
-//	}
-	auto adaptor = std::make_shared<AverCaptureAdaptor>();//初始化一个Aver采集卡视频适配器
+	if (!dtcr.initPLC())
+	{
+#ifdef _DEBUG
+		qDebug("%s", "无法初始化通信模块");
+#endif // _DEBUG
 
+		QMessageBox::information(nullptr, "error", u8"无法初始化通信模块，请检查与触摸屏的网线连接", QMessageBox::Ok, QMessageBox::Ok);
+	}
+
+	auto adaptor = std::make_shared<AverCaptureAdaptor>();//初始化一个Aver采集卡视频适配器
+	Sleep(10000);
 	if (!adaptor->init())//采集卡初始化
 	{
 #ifdef _DEBUG
 		qDebug("%s", adaptor->errorMsg().c_str());
 #endif // _DEBUG
 	}
-
 	dtcr.setAdaptor(adaptor);//将采集卡适配器设置到探测器类对象
 	dtcr.setRunning(true);
 
@@ -56,15 +56,15 @@ void DetectViewer::paintGL()
 
 
 }
-//
-//
-//void DetectViewer::mouseMoveEvent(QMouseEvent * event)
-//{
-//	QPoint p = event->pos();
-//	float x = p.x();
-//	float y = p.y();
-//	Point2f temp{ x,y };
-//	dtcr.setMousePos(temp);
-//}
+
+
+void DetectViewer::mouseMoveEvent(QMouseEvent * event)
+{
+	QPoint p = event->pos();
+	float x = p.x();
+	float y = p.y();
+	Point2f temp{ x,y };
+	dtcr.setMousePos(temp);
+}
 
 

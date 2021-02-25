@@ -10,7 +10,10 @@ public:
 	CameraCaptureAdaptor(int index = 0) :
 		_cv_capture(cv::VideoCapture(index))
 	{}
-	~CameraCaptureAdaptor(){}
+	~CameraCaptureAdaptor()
+	{
+		_cv_capture.release();
+	}
 	bool init()
 	{
 		if (!_cv_capture.isOpened())

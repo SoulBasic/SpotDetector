@@ -30,6 +30,13 @@ private slots:
 
     void on_detect_size_slider_sliderMoved(int position);
 
+	void on_target_ver_slider_sliderMoved(int position);
+	void on_target_hor_slider_sliderMoved(int position);
+	void on_target_angle_slider_sliderMoved(int position);
+	void on_target_cell_slider_sliderMoved(int position);
+
+	void on_save_button_clicked();
+
     void on_pause_button_clicked();
 
 	void on_ellipse_button_clicked();

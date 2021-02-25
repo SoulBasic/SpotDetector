@@ -10,7 +10,7 @@ public:
 	explicit PictureCaptureAdaptor(const cv::String& pictureFileName):_pic(cv::Mat(cv::imread(pictureFileName))){}
 	~PictureCaptureAdaptor()
 	{
-
+		_pic.release();
 	}
 
 	bool init()

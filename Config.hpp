@@ -7,8 +7,8 @@
 
 #define CAPTURE_FRAMERATE 2500 //采集卡帧率(帧率*100)
 
-#define TARGET_OFFSET_ANGLE -3 //标靶偏移角
-#define MIN_CONTOUR_SIZE 100 //最小轮廓检测阈值
+#define MIN_CONTOUR_SIZE 10 //最小轮廓检测阈值
+#define MAX_CONTOUR_SIZE 150 //最大轮廓检测阈值(过滤过大的光斑)
 #define REPORT_RATE 2 //通信报告率(HZ)，不可大于25，否则易出现不可预知错误
 
 #define BIND_ADDRESS false //固定主机地址(此处为false下面的主机地址端口即为自动分配)

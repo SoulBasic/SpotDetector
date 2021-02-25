@@ -1,7 +1,7 @@
 #include "Detector.h"
 
 
-Detector::Detector(int threshVal, int minArea = 110) :
+Detector::Detector(int threshVal, int minArea) :
 	_threshVal(threshVal),
     _minArea(minArea),
 	_running(true),
@@ -18,15 +18,23 @@ Detector::Detector(int threshVal, int minArea = 110) :
 	_cell_length(0),
 	_seq_modbus(COMM_START_SEQUENCE),
 	_csock(INVALID_SOCKET),
-	_ret(0)
+	_ret(0),
+	_target_ver_offset(0.5f),
+	_target_hor_offset(0.5f),
+	_cell_expand_para(0.75f),
+	_target_offset_angle(0)
 {
+	FILE* target = fopen("target_config.ini", "rt");
+	if (target != nullptr)
+	{
+		fscanf(target, "target_ver_offset=%f\ntarget_hor_offset=%f\ntarget_offset_angle=%d\ncell_expand_para=%f", &_target_ver_offset, &_target_hor_offset, &_target_offset_angle, &_cell_expand_para);
+		fclose(target);
+	}
 
 	std::thread tt(std::bind(&Detector::timeThread, this));
 	tt.detach();
 	std::thread ct(std::bind(&Detector::clearThread, this));
 	ct.detach();
-	
-
 }
 
 Detector::~Detector()
@@ -221,6 +229,16 @@ int Detector::getFiles(const char* path, std::vector<std::string>& arr, time_t n
 	return num_of_img;
 }
 
+void Detector::calc_target()
+{
+	_abs_center = Point2d(static_cast<float>(_frame_cache.cols) * _target_ver_offset, static_cast<float>(_frame_cache.rows) * _target_hor_offset);
+	_cell_length = static_cast<float>(_frame_cache.cols) * _cell_expand_para;
+	_hor = Line2d(_abs_center.x, 0, _abs_center.x, _frame_cache.rows);
+	_ver = Line2d(0, _abs_center.y, _frame_cache.cols, _abs_center.y);
+	lineRotate(_hor, _abs_center, _target_offset_angle);
+	lineRotate(_ver, _abs_center, _target_offset_angle);
+}
+
 void Detector::pointRotate(Point2d& point, Point2d& pivot, int angle)
 {
 	int x = point.x, y = point.y;//旋转的点
@@ -281,16 +299,12 @@ Mat& Detector::frame()
 	if (_running)
 	{
 		process(_frame_cache);
-		
+
 	}
 	if (_abs_center.x == 0)//计算标靶的精确位置信息
 	{
-		_abs_center = Point2d(static_cast<float>(_frame_cache.cols) * 0.5083, static_cast<float>(_frame_cache.rows) * 0.5017);
-		_cell_length = static_cast<float>(_frame_cache.cols)*0.0675;
-		_hor = Line2d(_abs_center.x, 0, _abs_center.x, _frame_cache.rows);
-		_ver = Line2d(0, _abs_center.y, _frame_cache.cols, _abs_center.y);
-		lineRotate(_hor, _abs_center, TARGET_OFFSET_ANGLE);
-		lineRotate(_ver, _abs_center, TARGET_OFFSET_ANGLE);
+
+		calc_target();
 
 	}
 #ifdef LOG_VIDEOANDPICTURE
@@ -452,7 +466,7 @@ void Detector::process(Mat& srcImg)
 	float max_area = 0;
 	for (int i = 0; i < contours.size(); i++)//求拟合椭圆
 	{
-		if (contours[i].size() >= MIN_CONTOUR_SIZE)
+		if (contours[i].size() >= MIN_CONTOUR_SIZE && contours[i].size() < MAX_CONTOUR_SIZE)
 		{
 			box[i] = fitEllipse(Mat(contours[i]));
 			Size2f size = box[i].size;
@@ -465,17 +479,13 @@ void Detector::process(Mat& srcImg)
 	}
 	if (max_area != 0)//计算偏移坐标及绘制必要的信息
 	{
-		Point2f center = box[max_index].center;
-		//double offsetx = getDistance(center, _ver.first, _ver.second);
-		//double offsety = getDistance(center, _hor.first, _hor.second);
-		Point2d temp, temp1;
-		int angle = 4;
-		temp.x = center.x*cos(angle* M_PI / 180) + center.y*sin(angle* M_PI / 180);
-		temp.y = center.y*cos(angle* M_PI / 180) - center.x*sin(angle* M_PI / 180);
-		temp1.x = _abs_center.x*cos(angle* M_PI / 180) + _abs_center.y*sin(angle* M_PI / 180);
-		temp1.y = _abs_center.y*cos(angle* M_PI / 180) - _abs_center.x*sin(angle* M_PI / 180);//求偏移坐标
-		_offset.x = static_cast<int>((temp.x - temp1.x) * 10 / _cell_length);
-		_offset.y = static_cast<int>((temp1.y - temp.y) * 10 / _cell_length);
+		Point2d center = box[max_index].center;
+		Point2d offset_center;
+		offset_center.x = (center.x - _abs_center.x) / _cell_length * 10;
+		offset_center.y = (_abs_center.y - center.y) / _cell_length * 10;
+		int angle = -_target_offset_angle;
+		_offset.x = offset_center.x*cos(angle* M_PI / 180) + offset_center.y*sin(angle* M_PI / 180);
+		_offset.y = offset_center.y*cos(angle* M_PI / 180) - offset_center.x*sin(angle* M_PI / 180);
 		
 		std::string text = 
 			"(" + 
@@ -484,18 +494,15 @@ void Detector::process(Mat& srcImg)
 			std::to_string(_offset.y) +
 			")";
 		putText(dstImg, text, cv::Point(5, 80), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
-
-		
-
 		//text =
 		//	"(" +
 		//	std::to_string(_offset.x + 50) +
 		//	"," +
-		//	std::to_string(50 - _offset.yS) +
+		//	std::to_string(50 - _offset.y) +
 		//	")";
 		//putText(dstImg, text, cv::Point(5, 60), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
-		line(dstImg, Point2f(center.x, center.y - 8), Point2f(center.x, center.y + 8), Scalar(0, 0, 255), 2, 8);
-		line(dstImg, Point2f(center.x - 8, center.y), Point2f(center.x + 8, center.y), Scalar(0, 0, 255), 2, 8);//绘制中心十字
+		line(dstImg, Point2f(center.x, center.y - 6), Point2f(center.x, center.y + 6), Scalar(0, 0, 255), 2, 8);
+		line(dstImg, Point2f(center.x - 6, center.y), Point2f(center.x + 6, center.y), Scalar(0, 0, 255), 2, 8);//绘制中心十字
 		if (_show_ellipse)
 		{
 			ellipse(dstImg, box[max_index], Scalar(0, 255, 0), 1, 8);

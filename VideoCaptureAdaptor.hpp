@@ -7,8 +7,14 @@
 class VideoCaptureAdaptor : public CaptureAdaptor
 {
 public:
-	explicit VideoCaptureAdaptor(const cv::String& videoFileName):_cv_capture(cv::VideoCapture(videoFileName)){}
-	~VideoCaptureAdaptor(){}
+	explicit VideoCaptureAdaptor(const cv::String& videoFileName):_cv_capture(cv::VideoCapture(videoFileName))
+	{
+		fileName = videoFileName;
+	}
+	~VideoCaptureAdaptor()
+	{
+		_cv_capture.release();
+	}
 	bool init()
 	{
 		if (!_cv_capture.isOpened())
@@ -20,10 +26,16 @@ public:
 	}
 	bool getFrame(cv::Mat& frame) override
 	{
-		return _cv_capture.read(frame);
+		if (!_cv_capture.read(frame))
+		{
+			_cv_capture.release();
+			_cv_capture = cv::VideoCapture(fileName);
+			return _cv_capture.read(frame);
+		}
 	}
 private:
 	cv::VideoCapture _cv_capture;
+	cv::String fileName;
 };
 
 

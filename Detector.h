@@ -11,7 +11,6 @@
 #include <WinSock2.h>
 #include <qt_windows.h>
 #include <io.h>
-
 #include <atomic>
 #include <thread>
 #include <memory>
@@ -52,8 +51,20 @@ public:
 	bool initPLC();//网口通信初始化
 	bool calcXOR(std::string& cmd);//校验位计算
 	void stoa_hex(short src, char* dest);//2字节整数转16位字符串
+	void setMousePos(Point2d p) { _center = p; }
 	inline void setThreshVal(int val) { _threshVal = val; }//threshVal是光斑亮度检测阈值
 	inline void setMinArea(int val) { _minArea = val; }//MinArea是光斑大小检测阈值
+
+	void setVerOffset(float val) { _target_ver_offset = val; calc_target(); }
+	void setHorOffset(float val) { _target_hor_offset = val; calc_target(); }
+	void setCellExpandPara(float val) { _cell_expand_para = val; calc_target(); }
+	void setOffsetAngle(int val) { _target_offset_angle = val; calc_target(); }
+
+	inline float verOffset() { return _target_ver_offset; }
+	inline float horOffset() { return _target_hor_offset; }
+	inline float cellExpandPara() { return _cell_expand_para; }
+	inline int offsetAngle() { return _target_offset_angle; }
+
 	inline bool ellipseVisible() { return _show_ellipse; }
 	inline bool targetVisible() { return _show_target; }
 	inline void showTarget(bool val) { _show_target = val; }//显示标靶
@@ -66,6 +77,7 @@ private:
 	std::string get_time_string(time_t stamp, bool is_file_name);
 	void clearThread();
 	int getFiles(const char *path, std::vector<std::string>& arr, time_t now);
+	void calc_target();
 	void pointRotate(Point2d& point, Point2d& pivot, int angle);//点旋转算法
 	void lineRotate(Line2d& line,Point2d& pivot, int angle);//线旋转算法
 	double getDistance(Point2f P, Point2f A, Point2f B);//点线距算法
@@ -76,11 +88,16 @@ private:
 	Mat _frame_cache;
 	Mat _frame_write_cache;
 	Point2i _offset;
+	Point2d _center;
 	Point2d _abs_center;
 	Line2d _hor;
 	Line2d _ver;
 	time_t _log_checktime;
 	time_t _now_time;
+	float _target_ver_offset;
+	float _target_hor_offset;
+	float _cell_expand_para;
+	int _target_offset_angle;
 	int _cell_length;
 	int _threshVal;
 	int _minArea;
