@@ -26,7 +26,6 @@ void DetectViewer::initializeGL()
 	}
 
 	auto adaptor = std::make_shared<AverCaptureAdaptor>();//初始化一个Aver采集卡视频适配器
-	Sleep(10000);
 	if (!adaptor->init())//采集卡初始化
 	{
 #ifdef _DEBUG

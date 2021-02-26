@@ -22,13 +22,17 @@ Detector::Detector(int threshVal, int minArea) :
 	_target_ver_offset(0.5f),
 	_target_hor_offset(0.5f),
 	_cell_expand_para(0.75f),
-	_target_offset_angle(0)
+	_target_offset_angle(0),
+	_history_read(false)
 {
+	Sleep(15000);
 	FILE* target = fopen("target_config.ini", "rt");
 	if (target != nullptr)
 	{
 		fscanf(target, "target_ver_offset=%f\ntarget_hor_offset=%f\ntarget_offset_angle=%d\ncell_expand_para=%f", &_target_ver_offset, &_target_hor_offset, &_target_offset_angle, &_cell_expand_para);
 		fclose(target);
+		calc_target();
+		_history_read = true;
 	}
 
 	std::thread tt(std::bind(&Detector::timeThread, this));
@@ -61,6 +65,17 @@ void Detector::timeThread()
 	{
 		if (a != -1 && msg.message == WM_TIMER)
 		{
+			if (!_history_read)
+			{
+				FILE* target = fopen("target_config.ini", "rt");
+				if (target != nullptr)
+				{
+					fscanf(target, "target_ver_offset=%f\ntarget_hor_offset=%f\ntarget_offset_angle=%d\ncell_expand_para=%f", &_target_ver_offset, &_target_hor_offset, &_target_offset_angle, &_cell_expand_para);
+					fclose(target);
+					calc_target();
+					_history_read = true;
+				}
+			}
 			_fps = _frame_count * 5;
 			_frame_count = 0;
 			send_modbus_packet();

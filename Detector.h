@@ -107,6 +107,7 @@ private:
 	bool _running;
 	bool _show_ellipse;
 	bool _show_target;
+	bool _history_read;
 	int _ret;
 	char _recvBuf[256] = {};
 };
