@@ -109,6 +109,8 @@ public:
 		_frame_buffer = new BYTE[_frame_buffer_size * 2];
 		return true;
 	}
+
+
 	bool getFrame(cv::Mat& frame) override
 	{
 		if (AVerCaptureSingleImageToBuffer(_hCaptureDevice, _frame_buffer, &_frame_buffer_size, false, 1000 / _fps) != CAP_EC_SUCCESS)

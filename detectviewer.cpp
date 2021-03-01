@@ -53,7 +53,6 @@ void DetectViewer::paintGL()
 	painter.drawImage(QPoint(0, 0), qframe);
 	painter.end();
 
-
 }
 
 

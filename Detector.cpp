@@ -318,9 +318,7 @@ Mat& Detector::frame()
 	}
 	if (_abs_center.x == 0)//计算标靶的精确位置信息
 	{
-
 		calc_target();
-
 	}
 #ifdef LOG_VIDEOANDPICTURE
 	if (!_frame_cache.empty())
@@ -474,7 +472,7 @@ void Detector::process(Mat& srcImg)
 	}
 	_now_time = now;
 
-	putText(dstImg, get_time_string(_now_time, false), cv::Point(5, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));//帧率文字
+	putText(dstImg, get_time_string(_now_time, false), cv::Point(5, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));//时间
 	putText(dstImg, _ret == 12 ? "COMM_OK" : "COMM_ERROR", cv::Point(5, 40), FONT_HERSHEY_SIMPLEX, 0.5, _ret == 12 ? Scalar(0, 255, 0) : Scalar(0, 0, 255));
 	putText(dstImg, std::to_string(_fps) + "FPS", cv::Point(5, 60), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));//帧率文字
 	int max_index = 0;
